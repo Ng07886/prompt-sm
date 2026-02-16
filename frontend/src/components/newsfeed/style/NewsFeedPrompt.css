@@ -1,0 +1,13 @@
+.newsfeed-prompt {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  align-items: center; /* vertical center if parent has height */
+  justify-content: center; /* horizontal center */
+  text-align: center;
+  padding: 1rem;
+}
+
+.newsfeed-prompt > * {
+  max-width: 720px;
+}

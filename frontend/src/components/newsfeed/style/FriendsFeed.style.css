@@ -1,0 +1,121 @@
+.friends-feed {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  gap: 16px;
+  align-items: flex-start;
+  /* Add some horizontal padding so cards don't touch the viewport edge */
+  padding: 12px;
+}
+
+/* Fullscreen overlay for selected friend card */
+.friend-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1200;
+  padding: 24px;
+}
+
+.friend-overlay-inner {
+  max-width: 920px;
+  width: 100%;
+  max-height: 90vh;
+  overflow: auto;
+  position: relative; /* so the close button can be positioned relative to the inner card */
+}
+
+/* Open/close animation classes */
+.friend-overlay.open {
+  animation: overlayFadeIn 220ms ease-out forwards;
+}
+
+.friend-overlay.exit {
+  animation: overlayFadeOut 220ms ease-in forwards;
+}
+
+.friend-overlay.open .friend-overlay-inner {
+  animation: contentScaleIn 260ms cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+}
+
+.friend-overlay.exit .friend-overlay-inner {
+  animation: contentScaleOut 240ms cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+@keyframes overlayFadeIn {
+  from {
+    background: rgba(0, 0, 0, 0);
+  }
+  to {
+    background: rgba(0, 0, 0, 0.6);
+  }
+}
+
+@keyframes overlayFadeOut {
+  from {
+    background: rgba(0, 0, 0, 0.6);
+  }
+  to {
+    background: rgba(0, 0, 0, 0);
+  }
+}
+
+@keyframes contentScaleIn {
+  from {
+    transform: scale(0.96);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+@keyframes contentScaleOut {
+  from {
+    transform: scale(1);
+    opacity: 1;
+  }
+  to {
+    transform: scale(0.96);
+    opacity: 0;
+  }
+}
+
+.friend-overlay-close {
+  /* Position fixed so it's always visible and not clipped by inner overflow */
+  position: fixed;
+  right: 2px;
+  top: 4px;
+  border: none;
+  font-size: 20px;
+  width: 40px;
+  height: 40px;
+  line-height: 1;
+  cursor: pointer;
+  background-color: red;
+  border-radius: 999px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1300;
+}
+
+/* When a card is shown inside the fullscreen overlay, make it expand to
+   fill the overlay-inner container so it appears full-screen-ish. */
+.friend-overlay .friend-answer-card {
+  width: 100%;
+  margin-top: 0;
+  border-radius: 8px;
+}
+
+.friend-overlay .friend-answer-card .friend-answer-card-header {
+  padding: 16px;
+}
+
+.friend-overlay .friend-answer-card .friend-card-content {
+  margin: 0 20px 20px 20px;
+}
