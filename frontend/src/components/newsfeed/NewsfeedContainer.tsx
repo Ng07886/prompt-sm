@@ -1,23 +1,27 @@
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import NewsFeedPrompt from "./NewsFeedPrompt";
 import FriendsFeed from "./FriendsFeed";
+import { useMe } from "@/hooks/useMe";
+import { getISODate } from "@/utils/date";
+import PromptModal from "./PromptModal";
+import { useState } from "react";
+import { Button } from "@mui/material";
 
 export default function NewsfeedContainer() {
   const { user, getIdToken, loading } = useAuth();
-  const [token, setToken] = useState<string | null>(null);
+  const [forcePromptOpen, setForcePromptOpen] = useState(false);
+  const { data: me, isLoading: meLoading } = useMe();
+  const today = getISODate();
+
+  const hasAnsweredToday = me?.lastAnsweredPromptDate === today;
 
   useEffect(() => {
-    let mounted = true;
     async function fetchToken() {
-      if (!user) return setToken(null);
-      const t = await getIdToken();
-      if (mounted) setToken(t);
+      if (!user) return;
+      await getIdToken();
     }
     fetchToken();
-    return () => {
-      mounted = false;
-    };
   }, [user, getIdToken]);
 
   if (loading) return <div>Loading auth...</div>;
@@ -28,7 +32,28 @@ export default function NewsfeedContainer() {
         <div>
           <NewsFeedPrompt />
           <hr></hr>
-          <FriendsFeed />
+          {meLoading ? (
+            <div>Loading profile...</div>
+          ) : hasAnsweredToday ? (
+            <FriendsFeed />
+          ) : (
+            <div>
+              <p>
+                You need to answer today’s prompt before you can see your
+                friends’ answers.
+              </p>
+              <Button
+                variant="contained"
+                onClick={() => setForcePromptOpen(true)}
+              >
+                Answer now
+              </Button>
+              <PromptModal
+                modalOpen={forcePromptOpen}
+                setModalOpen={setForcePromptOpen}
+              />
+            </div>
+          )}
         </div>
       ) : (
         <div>Not signed in</div>

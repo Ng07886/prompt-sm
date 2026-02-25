@@ -1,23 +1,17 @@
 import { useAuth } from "@/contexts/AuthContext";
-import React, { useEffect, useState } from "react";
+import { useEffect } from "react";
 import AddFriendSection from "./AddFriendSection";
 import FriendsList from "./FriendsList";
 
 export default function FriendsContainer() {
   const { user, getIdToken, loading } = useAuth();
-  const [token, setToken] = useState<string | null>(null);
 
   useEffect(() => {
-    let mounted = true;
     async function fetchToken() {
-      if (!user) return setToken(null);
-      const t = await getIdToken();
-      if (mounted) setToken(t);
+      if (!user) return;
+      await getIdToken();
     }
     fetchToken();
-    return () => {
-      mounted = false;
-    };
   }, [user, getIdToken]);
 
   if (loading) return <div>Loading auth...</div>;
