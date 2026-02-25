@@ -10,11 +10,13 @@ import {
 } from "firebase/auth";
 import { auth } from "@/firebase/firebaseConfig";
 import { useNavigate } from "react-router-dom";
+import { useRegisterUser } from "@/hooks/useRegisterUser";
 
 export const LoginPlain = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const navigate = useNavigate();
+  const registerUser = useRegisterUser();
 
   const handleChange = (
     e: ChangeEvent<HTMLInputElement>,
@@ -39,6 +41,13 @@ export const LoginPlain = () => {
         password,
       );
       const user = userCredential.user;
+
+      // Ensure token is minted and then register the user in our backend.
+      await auth.currentUser?.getIdToken();
+      await registerUser.mutateAsync({
+        displayName: user.displayName ?? undefined,
+        photoURL: user.photoURL ?? undefined,
+      });
       // after sign up, get token and redirect
       try {
         const t = await auth.currentUser?.getIdToken();
@@ -48,9 +57,9 @@ export const LoginPlain = () => {
       }
       // success: navigate or close modal here
       navigate("/newsfeed");
-    } catch (err: any) {
+    } catch (err: unknown) {
       // map known Firebase codes to friendly messages
-      const code = err?.code;
+      const code = (err as { code?: string } | null)?.code;
       console.error("Signup error", code, err);
       //   if (code === "auth/email-already-in-use") {
       //     setError("That email is already in use.");
@@ -83,6 +92,13 @@ export const LoginPlain = () => {
         password,
       );
       const user = userCredential.user;
+
+      // Ensure token is minted and try to register (backend can treat as upsert).
+      await auth.currentUser?.getIdToken();
+      await registerUser.mutateAsync({
+        displayName: user.displayName ?? undefined,
+        photoURL: user.photoURL ?? undefined,
+      });
       // fetch token then redirect to newsfeed
       try {
         const t = await auth.currentUser?.getIdToken();
@@ -92,9 +108,9 @@ export const LoginPlain = () => {
       }
       // success: navigate or close modal here
       navigate("/newsfeed");
-    } catch (err: any) {
+    } catch (err: unknown) {
       // map known Firebase codes to friendly messages
-      const code = err?.code;
+      const code = (err as { code?: string } | null)?.code;
       console.error("Login error", code, err);
       //   if (code === "auth/email-already-in-use") {
       //     setError("That email is already in use.");
@@ -128,6 +144,11 @@ export const LoginPlain = () => {
       ></input>
       <button onClick={() => handleLogin()}>Login</button>
       <button onClick={() => handleNewUser()}>Signup</button>
+      {registerUser.isError && (
+        <p style={{ color: "crimson" }}>
+          {(registerUser.error as Error)?.message ?? "Registration failed"}
+        </p>
+      )}
     </div>
   );
 };

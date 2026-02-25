@@ -1,6 +1,7 @@
 import Masonry from "@mui/lab/Masonry";
 import { useEffect, useState } from "react";
 import FriendCard from "./FriendCard";
+import { useFriendsWithStats } from "@/hooks/useFriendsWithStats";
 
 type Friend = {
   id: number;
@@ -9,23 +10,43 @@ type Friend = {
   numAnswered: number;
 };
 
-// Fake data matching the Friend type
-const fakeData: Friend[] = [
-  { id: 1, friendName: "Alice", streak: "7d", numAnswered: 42 },
-  { id: 2, friendName: "Ben", streak: "3d", numAnswered: 12 },
-  { id: 3, friendName: "Carla", streak: "14d", numAnswered: 88 },
-  { id: 4, friendName: "Diego", streak: "1d", numAnswered: 2 },
-  { id: 5, friendName: "Elena", streak: "21d", numAnswered: 150 },
-  { id: 6, friendName: "Faisal", streak: "5d", numAnswered: 30 },
-  { id: 7, friendName: "Grace", streak: "12d", numAnswered: 64 },
-  { id: 8, friendName: "Hiro", streak: "0d", numAnswered: 0 },
-  { id: 9, friendName: "Ivy", streak: "9d", numAnswered: 27 },
-  { id: 10, friendName: "Jon", streak: "2d", numAnswered: 7 },
-];
+// We keep a small local view-model type for FriendCard.
+type FriendVm = Friend;
 
 export default function FriendsList() {
+  const { data, isLoading, isError, error } = useFriendsWithStats();
+
   const [selected, setSelected] = useState<Friend | null>(null);
   const [isClosing, setIsClosing] = useState(false);
+
+  const friends: FriendVm[] = Array.isArray(data)
+    ? (data as unknown[]).map((f, idx) => {
+        const rec = (
+          typeof f === "object" && f !== null
+            ? (f as Record<string, unknown>)
+            : {}
+        ) as Record<string, unknown>;
+
+        return {
+          id: idx,
+          friendName:
+            (rec.username as string | undefined) ??
+            (rec.displayName as string | undefined) ??
+            (rec.friendName as string | undefined) ??
+            "Friend",
+          streak: String(
+            (rec.streak as string | number | undefined) ??
+              (rec.currentStreak as string | number | undefined) ??
+              "0d",
+          ),
+          numAnswered: Number(
+            (rec.numAnswered as number | undefined) ??
+              (rec.answeredCount as number | undefined) ??
+              0,
+          ),
+        };
+      })
+    : [];
 
   // Close with an animation: set isClosing to true, wait for animation, then clear selection
   const handleClose = () => {
@@ -46,8 +67,14 @@ export default function FriendsList() {
   }, [selected]);
   return (
     <div className="friends-feed">
+      {isLoading && <div>Loading friends...</div>}
+      {isError && (
+        <div style={{ color: "crimson" }}>
+          {(error as Error)?.message ?? "Failed to load friends"}
+        </div>
+      )}
       <Masonry columns={3} spacing={2}>
-        {fakeData.map((f) => (
+        {friends.map((f) => (
           <div
             key={f.id}
             role="button"

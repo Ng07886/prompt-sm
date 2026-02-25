@@ -2,10 +2,14 @@ import { useState } from "react";
 import "./style/NewsFeedPrompt.css";
 import { Box, Button, Typography } from "@mui/material";
 import PromptModal from "./PromptModal";
+import { usePromptOfTheDay } from "@/hooks/usePromptOfTheDay";
+import { getISODate } from "@/utils/date";
 
 export default function NewsFeedPrompt() {
-  const [answered, setAnswered] = useState(true);
+  const [answered] = useState(true);
   const [modalOpen, setModalOpen] = useState(false);
+
+  const { data: prompt } = usePromptOfTheDay(getISODate());
 
   const handleAnswerClick = () => {
     setModalOpen(true);
@@ -17,7 +21,7 @@ export default function NewsFeedPrompt() {
         <>
           <Typography variant="h4">Prompt of the day!</Typography>
           <Typography variant="h6">
-            If you could live in a book, TV show, or movie, what would it be?
+            {prompt ? prompt.question : "Loading prompt..."}
           </Typography>
         </>
       )}

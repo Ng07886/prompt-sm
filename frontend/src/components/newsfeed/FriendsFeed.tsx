@@ -3,6 +3,8 @@ import { useState } from "react";
 import FriendCard from "../friends/FriendCard";
 import Masonry from "@mui/lab/Masonry";
 import { useEffect } from "react";
+import { useNewsfeedFeed } from "@/hooks/useNewsfeed";
+import { getISODate } from "@/utils/date";
 
 type Friend = {
   id: string;
@@ -10,66 +12,38 @@ type Friend = {
   answer: string;
 };
 
-const fakeData: Friend[] = [
-  {
-    id: "1",
-    friendName: "Alice",
-    answer: "Harry Potter — Hogwarts, magic, and cozy common rooms.",
-  },
-  {
-    id: "2",
-    friendName: "Bob",
-    answer:
-      "I would live in Middle-earth — not in the middle of any great wars, but in a peaceful, beautiful corner like the Shire or Ithilien. The landscapes, customs, and deep history make it a place you can wander for years and still find surprises. I love the idea of slow life, pubs with good music, and paths that lead to unexpected adventures.",
-  },
-  {
-    id: "3",
-    friendName: "Charlie",
-    answer: "Star Wars — for the epic space travel and droids.",
-  },
-  {
-    id: "4",
-    friendName: "Dana",
-    answer:
-      "The world of Avatar — elemental bending and a strong sense of balance appeals to me.",
-  },
-  {
-    id: "5",
-    friendName: "Ethan",
-    answer:
-      "Narnia sounds magical. I imagine waking up to snow that melts into spring in a single day, talking creatures that become friends, and secrets behind every wardrobe. It feels like a world where wonder and danger sit side by side, which would make for endless stories.",
-  },
-  {
-    id: "6",
-    friendName: "Fiona",
-    answer: "Star Trek — exploration and cooperation.",
-  },
-  {
-    id: "7",
-    friendName: "Gabe",
-    answer:
-      "Studio Ghibli worlds are cozy and wonder-filled; Id love that vibe.",
-  },
-  {
-    id: "8",
-    friendName: "Hana",
-    answer:
-      "A peaceful corner of Middle-earth like the Shire — calm and beautiful landscapes with fields, small inns, and friendly neighbors. I could spend days gardening and evenings listening to tales by the fire.",
-  },
-  {
-    id: "9",
-    friendName: "Iris",
-    answer: "The Wizarding World — curious and magical.",
-  },
-  {
-    id: "10",
-    friendName: "Jack",
-    answer:
-      "The Pokémon world — travel, friends, and adventures with creatures sounds like fun! I'd like to visit different regions and see how cultures use Pokémon differently.",
-  },
-];
-
 export default function FriendsFeed() {
+  const today = getISODate();
+  const { data, isLoading, isError, error } = useNewsfeedFeed({
+    pageSize: 30,
+    date: today,
+  });
+
+  const items: Friend[] = Array.isArray(data?.data)
+    ? (data!.data as unknown[]).map((item, idx) => {
+        const rec =
+          typeof item === "object" && item !== null
+            ? (item as Record<string, unknown>)
+            : ({} as Record<string, unknown>);
+
+        // Best-effort mapping (we can tighten once we confirm backend shape).
+        const id = (rec.id as string | undefined) ?? String(idx);
+        // Backend currently returns answer docs keyed by uid.
+        // We don't have displayName joined yet, so show uid for now.
+        const friendName =
+          (rec.displayName as string | undefined) ??
+          (rec.username as string | undefined) ??
+          (rec.userId as string | undefined) ??
+          "Friend";
+        const answer =
+          (rec.answer as string | undefined) ??
+          (rec.response as string | undefined) ??
+          "";
+
+        return { id, friendName, answer };
+      })
+    : [];
+
   const [selected, setSelected] = useState<Friend | null>(null);
   const [isClosing, setIsClosing] = useState(false);
 
@@ -93,8 +67,14 @@ export default function FriendsFeed() {
 
   return (
     <div className="friends-feed">
+      {isLoading && <div>Loading feed...</div>}
+      {isError && (
+        <div style={{ color: "crimson" }}>
+          {(error as Error)?.message ?? "Failed to load feed"}
+        </div>
+      )}
       <Masonry columns={3} spacing={2}>
-        {fakeData.map((f) => (
+        {items.map((f) => (
           <div
             key={f.id}
             role="button"
